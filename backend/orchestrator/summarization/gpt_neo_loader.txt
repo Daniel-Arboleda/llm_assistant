@@ -1,0 +1,115 @@
+import torch
+import gc
+import os
+import signal
+import psutil
+import logging
+from transformers import GPTNeoForCausalLM, GPT2Tokenizer
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
+MODEL_PATH = os.getenv("MODEL_PATH", "C:/Users/danie/OneDrive/Documentos/llm_assistant/backend/orchestrator/summarization/model/model")
+
+# Configuración de logging profesional con carpeta centralizada
+LOG_DIR = "C:/Users/danie/OneDrive/Documentos/llm_assistant/backend/orchestrator/logs"
+os.makedirs(LOG_DIR, exist_ok=True)  # Asegurar que la carpeta de logs existe
+LOG_FILE = os.path.join(LOG_DIR, "gpt_neo_loader.log")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_FILE, encoding="utf-8"),  # Guardar logs en archivo
+        logging.StreamHandler()  # Mostrar logs en consola
+    ]
+)
+
+def clear_memory():
+    """
+    🧹 Limpia la memoria GPU y CPU para evitar fugas.
+    """
+    try:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        gc.collect()
+        logging.info("🔄 Memoria limpiada correctamente.")
+    except Exception as e:
+        logging.error(f"⚠️ Error al limpiar memoria: {e}")
+
+def terminate_zombie_processes():
+    """
+    🚫 Termina procesos zombies o huérfanos que puedan estar ocupando memoria.
+    """
+    current_pid = os.getpid()
+    try:
+        for proc in psutil.process_iter(attrs=['pid', 'ppid', 'name']):
+            if proc.info['ppid'] == current_pid and proc.info['pid'] != current_pid:
+                os.kill(proc.info['pid'], signal.SIGTERM)
+                logging.info(f"✅ Proceso zombie {proc.info['pid']} ({proc.info['name']}) terminado correctamente.")
+    except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
+        logging.warning(f"⚠️ No se pudo eliminar un proceso zombie: {e}")
+
+def load_model(model_name="EleutherAI/gpt-neo-1.3B", use_gpu=True):
+    """
+    🚀 Carga el modelo GPT-Neo desde almacenamiento local o lo descarga si es necesario.
+
+    Args:
+        model_name (str): Nombre del modelo preentrenado en Hugging Face.
+        use_gpu (bool): Indica si se debe utilizar la GPU.
+
+    Returns:
+        tuple: (modelo, tokenizador) si la carga es exitosa, (None, None) en caso de error.
+    """
+    device = torch.device("cuda" if use_gpu and torch.cuda.is_available() else "cpu")
+    logging.info(f"🔄 Cargando modelo en {device}...")
+
+    try:
+        tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+
+        # Si el modelo ya está en la ruta local, cargarlo desde allí
+        if os.path.exists(MODEL_PATH):
+            logging.info(f"📂 Cargando modelo desde almacenamiento local: {MODEL_PATH}")
+            model = GPTNeoForCausalLM.from_pretrained(MODEL_PATH).to(device)
+        else:
+            logging.info(f"🌐 Modelo no encontrado en {MODEL_PATH}, descargando desde Hugging Face...")
+            model = GPTNeoForCausalLM.from_pretrained(model_name).to(device)
+            model.save_pretrained(MODEL_PATH)  # Guardar para evitar futuras descargas
+            tokenizer.save_pretrained(MODEL_PATH)
+
+        logging.info("✅ Modelo cargado exitosamente.")
+        return model, tokenizer
+    except Exception as e:
+        logging.error(f"❌ Error al cargar el modelo: {e}")
+        return None, None
+
+def release_model(model):
+    """
+    🔄 Libera memoria del modelo al finalizar.
+    """
+    try:
+        if model:
+            del model
+            clear_memory()
+            logging.info("🚀 Modelo liberado de memoria correctamente.")
+    except Exception as e:
+        logging.error(f"⚠️ Error al liberar el modelo: {e}")
+
+if __name__ == "__main__":
+    clear_memory()
+    terminate_zombie_processes()
+    
+    model, tokenizer = load_model()
+    
+    if model:
+        logging.info("🤖 GPT-Neo listo para generar texto.")
+        
+        # Simulación de uso
+        input_text = "Hola, ¿cómo estás?"
+        inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
+        output = model.generate(**inputs, max_length=50)
+        logging.info(f"📝 Respuesta generada: {tokenizer.decode(output[0])}")
+
+        # Liberar memoria al finalizar
+        release_model(model)
+

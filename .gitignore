@@ -1,0 +1,40 @@
+# 🚀 Ignorar entornos virtuales locales y globales
+venv/
+backend/venv/
+backend/orchestrator/venv/
+
+# 🗑️ Ignorar archivos de caché de Python
+__pycache__/
+
+# 🔒 Ignorar variables de entorno
+.env
+
+# 📂 Ignorar logs
+*.log
+backend/orchestrator/logs/
+**/logs/
+
+# ❌ Ignorar la base de datos SQLite
+backend/orchestrator/db.sqlite3
+
+# 📌 Ignorar contenido de directorios específicos pero no los directorios
+backend/orchestrator/downloads/audio/*
+backend/orchestrator/downloads/chats/*
+backend/orchestrator/downloads/summaries/*
+backend/orchestrator/downloads/transcripts/*
+
+backend/orchestrator/summarization/model/*
+backend/orchestrator/summarization/model/model/*
+backend/orchestrator/summarization/model/model/merges.txt
+
+# Ignorar las migraciones
+backend/orchestrator/api/migrations/
+backend/orchestrator/downloader/migrations/
+backend/orchestrator/rag/migrations/
+backend/orchestrator/report/migrations/
+backend/orchestrator/summarization/migrations/
+backend/orchestrator/transcriber/migrations/
+
+
+# backend/orchestrator/test_gpu.py
+# backend/orchestrator/summarization/gpt_neo_loader.txt
