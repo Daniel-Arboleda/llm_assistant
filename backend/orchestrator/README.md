@@ -15,7 +15,45 @@ Este sistema permite extraer transcripciones de videos de YouTube, resumir su co
 │── 📝 `manage.py` - 🔧 Comando principal de Django  
 │── 📦 `requirements.txt` - 📜 Dependencias del proyecto  
 
----
+## 📁 Arquitectura por Capas
+---------------------------------------------------------------------------------------------------------
+
+---------------------|-----------------------|-----------------------|-----------------------
+Capa 1: Presentación |                       |                       |                       |
+---------------------|-----------------------|-----------------------|-----------------------
+                     | Cliente Web/App       | Postman/API REST      | Otros Clientes       |
+                     | - Envía solicitudes   | - Test API REST       | - Otros sistemas     |
+                     | - Descarga resultados | - Automatización      | - Integraciones      |
+---------------------|-----------------------|-----------------------|-----------------------
+
+---------------------|-----------------------|-----------------------|-----------------------
+Capa 2: Orquestación|       Orchestrator     |                       |                       |
+---------------------|-----------------------|-----------------------|-----------------------
+                     | - Recibe solicitudes  | - Redirige tráfico    | - Coordina servicios  |
+                     | - Expone APIs REST    | - Maneja respuestas   | - Controla flujo      |
+---------------------|-----------------------|-----------------------|-----------------------
+
+---------------------|-----------------------|-----------------------|-----------------------
+Capa 3: Microservicios |    Downloader      |   Transcriber         |   Summarization      |
+---------------------|-----------------------|-----------------------|-----------------------
+                        | - Descarga archivos | - Convierte audio    | - Genera resumen    |
+                        | - Verifica formato  | - Usa Whisper        | - Usa GPT-Neo       |
+                        | - Organiza archivos | - Guarda transcrip.  | - Filtra información|
+---------------------|-----------------------|-----------------------|-----------------------
+                        |          Report - Genera reportes en formato APA                |
+---------------------|----------------------------------------------------------------------|
+                        | Nota: Se propone integración futura del sistema con una APP      |
+---------------------|----------------------------------------------------------------------|
+
+---------------------|-----------------------|-----------------------|-----------------------
+Capa 4: Almacenamiento |   Base de Datos     |   Archivos de Audio   |   Resúmenes Word     |
+---------------------|-----------------------|-----------------------|-----------------------
+                        | - SQLite/PostgreSQL| - Transcripciones     | - Documentos en .docx |
+                        | - Bases de Datos   | - Archivos descargados | - Historial de reuniones |
+                        |   Vectoriales      | - Almacenamiento local| - Metadatos de resúmenes |
+---------------------|-----------------------|-----------------------|-----------------------
+
+
 
 ## 🚀 **Cómo Usar**  
 
@@ -24,28 +62,8 @@ Enviar una petición `POST` a:
 
 
 # Arrancar script de monitoreo de recursos en tiempo real en segundo plano y con logs
-python "C:\Users\danie\OneDrive\Documentos\llm_assistant\backend\orchestrator\logs\monitor.py"
+
 
 
 # 🎯 Resultado esperado en la terminal
-
-🔹 Monitoreo de RAM y CPU 🔹
-   Handles  NPM(K)    PM(K)      WS(K) VM(M)   CPU(s)     Id ProcessName
-   -------  ------    -----      ----- -----   ------     -- -----------
-   1000     2000      1234567    2345678 5000  12.34      1234 chrome
-   ...
-
-🔹 Monitoreo de GPU 🔹
-+-----------------------------------------------------------------------------+
-| NVIDIA-SMI 528.24                 Driver Version: 528.24                   |
-|-------------------------------+----------------------+----------------------|
-| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp   Perf  Pwr:Usage/Cap| Memory-Usage | GPU-Util  Compute M. |
-+-------------------------------+----------------------+----------------------|
-|  0  RTX 3090     On    Off   | 00000000:01:00.0 Off |        0%     0%  |
-|       55C    P8    15W / 350W |    1024MiB / 24576MiB |    0%      Default  |
-+-------------------------------+----------------------+----------------------+
-
-==================================================
-
 
